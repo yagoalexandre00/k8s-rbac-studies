@@ -1,34 +1,59 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name:  kube-board
+  name:  kubeboard
+  namespace: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kube-board-cluster-role
+  name: kubeboard-cluster-role
 rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: kube-board-cluster-role-binding
-subjects:
-  - kind: ServiceAccount
-    name: kube-board
-    namespace: default
+  name: kubeboard-cluster-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  name: kube-board-cluster-role
   kind: ClusterRole
+  name: kubeboard-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: kubeboard
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubeboard-role
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubeboard-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeboard-role
+subjects:
+  - kind: ServiceAccount
+    name: kubeboard
+    namespace: default
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kube-board
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -38,7 +63,7 @@ spec:
       labels:
         app: kube-board
     spec:
-      serviceAccountName: kube-board
+      serviceAccountName: kubeboard
       containers:
       - name: kube-board
         image: fabricioveronez/kube-board
@@ -54,6 +79,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kube-board
+  namespace: default
 spec:
   selector:
     app: kube-board
